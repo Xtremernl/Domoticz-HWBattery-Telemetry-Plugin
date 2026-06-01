@@ -1,11 +1,11 @@
 ## HomeWizard Battery Plugin
 ##
-## Author:         etmmvdp
-## Version:        0.0.3
+## Author:         etmmvdp & XtremerNL
+## Version:        0.0.4   # verhoogd ivm polling fix
 ## Last modified:  09-04-2025
 ##
 """
-<plugin key="HomeWizardBattery" name="HomeWizard Battery" author="etmmvdp" version="0.0.3" externallink="https://www.homewizard.com/nl/plug-in-battery">
+<plugin key="HomeWizardBattery" name="HomeWizard Battery" author="etmmvdp" version="0.0.4" externallink="https://www.homewizard.com/nl/plug-in-battery">
     <description>
         <h2>HomeWizard Battery Plugin</h2><br/>
         This plugin provides several devices for the HomeWizard Battery.<br/>
@@ -23,6 +23,8 @@
         <param field="Mode2" label="Token" width="250px" required="true" default=""/>
         <param field="Mode1" label="Data interval" width="250px">
             <options>
+                <option label="2 seconds" value="2"/>
+                <option label="5 seconds" value="5"/>
                 <option label="10 seconds" value="10"/>
                 <option label="20 seconds" value="20"/>
                 <option label="30 seconds" value="30"/>
@@ -61,26 +63,26 @@ except ImportError:
 
 class BasePlugin:
     debug = False
-    #Plugin variables
-    pluginInterval = 10     #in seconds
-    dataInterval = 60       #in seconds
+
+    # Plugin variables
+    pluginInterval = 1      # WAS 10 → heartbeat nu elke seconde
+    dataInterval = 60
     dataIntervalCount = 0
     use_p1_device = False
 
-    #Homewizard battery variables
-    energy_import_kwh = -1   # Number    The energy usage meter reading in kWh.
-    energy_export_kwh = -1   # Number    The energy feed-in meter reading in kWh.
-    power_w = -1             # Number    The total active usage in watt.
-    voltage_v = -1           # Number    The active voltage in volt.
-    current_a = -1           # Number    The active current in ampere.
-    frequency_hz = -1        # Number    Line frequency in hertz.
-    state_of_charge_pct = -1 # Number    The current state of charge in percent.
-    cycles = -1              # Number    Number of battery cycles.
+    # Homewizard battery variables
+    energy_import_kwh = -1
+    energy_export_kwh = -1
+    power_w = -1
+    voltage_v = -1
+    current_a = -1
+    frequency_hz = -1
+    state_of_charge_pct = -1
+    cycles = -1
 
-    # calculated values
-    efficiency = -1         # energy_export_kwh/energy_import_kwh * 100 %
+    efficiency = -1
 
-    #Device ID's
+    # Device ID's
     total_power_id = 150
     power_id = 153
     voltage_id = 154
@@ -90,7 +92,6 @@ class BasePlugin:
     cycles_id = 158
     efficiency_id = 159
 
-
     def onStart(self):
         if Parameters["Mode6"] == "Debug":
             Domoticz.Debugging(1)
@@ -98,16 +99,13 @@ class BasePlugin:
 
         self.use_p1_device = Parameters.get("Mode3", "") == "Yes"
 
-        # If data interval between 10 sec. and 5 min.
-        if 10 <= int(Parameters["Mode1"]) <= 300:
+        # WAS: 10 <= Mode1 <= 300
+        if 2 <= int(Parameters["Mode1"]) <= 300:
             self.dataInterval = int(Parameters["Mode1"])
         else:
-            # If not, set to 60 sec.
             self.dataInterval = 60
 
-        # Start the heartbeat
         Domoticz.Heartbeat(self.pluginInterval)
-
         return True
 
     def onConnect(self, Status, Description):
@@ -126,7 +124,6 @@ class BasePlugin:
             self.cycles = int(Data.get('cycles', 0))
 
             self.efficiency = int(100.0 * self.energy_export_kwh / self.energy_import_kwh) if self.energy_import_kwh != 0 else 0
-            Domoticz.Debug(f"Calculated efficiency: {self.efficiency} from import {self.energy_import_kwh} and export {self.energy_export_kwh}")
 
             if self.use_p1_device:
                 try:
@@ -202,17 +199,14 @@ class BasePlugin:
         return True
 
     def onCommand(self, Unit, Command, Level, Hue):
-        #Domoticz.Log("onCommand called for Unit " + str(Unit) + ": Parameter '" + str(Command) + "', Level: " + str(Level))
         return True
 
     def onNotification(self, Name, Subject, Text, Status, Priority, Sound, ImageFile):
-        #Domoticz.Log("Notification: " + Name + "," + Subject + "," + Text + "," + Status + "," + str(Priority) + "," + Sound + "," + ImageFile)
         return
 
     def onHeartbeat(self):
         self.dataIntervalCount += self.pluginInterval
 
-        #------- Collect data -------
         if self.dataIntervalCount >= self.dataInterval:
             self.dataIntervalCount = 0
             self._readMeasurement()
@@ -223,7 +217,6 @@ class BasePlugin:
         return
 
     def onStop(self):
-        #Domoticz.Log("onStop called")
         return True
 
     def _readMeasurement(self):
@@ -232,7 +225,10 @@ class BasePlugin:
             "Authorization": f"Bearer {Parameters['Mode2']}",
             "X-Api-Version": 2
         }
-        timeout = self.pluginInterval / 2
+
+        # WAS: timeout = self.pluginInterval / 2  → veroorzaakte handshake timeouts
+        timeout = 5   # vaste veilige timeout
+
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
@@ -249,35 +245,27 @@ global _plugin
 _plugin = BasePlugin()
 
 def onStart():
-    global _plugin
     _plugin.onStart()
 
 def onStop():
-    global _plugin
     _plugin.onStop()
 
 def onConnect(Status, Description):
-    global _plugin
     _plugin.onConnect(Status, Description)
 
 def onMessage(Data, Status, Extra):
-    global _plugin
     _plugin.onMessage(Data, Status, Extra)
 
 def onCommand(Unit, Command, Level, Hue):
-    global _plugin
     _plugin.onCommand(Unit, Command, Level, Hue)
 
 def onNotification(Name, Subject, Text, Status, Priority, Sound, ImageFile):
-    global _plugin
     _plugin.onNotification(Name, Subject, Text, Status, Priority, Sound, ImageFile)
 
 def onDisconnect():
-    global _plugin
     _plugin.onDisconnect()
 
 def onHeartbeat():
-    global _plugin
     _plugin.onHeartbeat()
 
 def _dump_config_to_log():
@@ -296,7 +284,6 @@ def _dump_config_to_log():
         Domoticz.Debug(f"Device LastLevel: {Devices[device].LastLevel}")
 
 def _update_device(Unit, nValue, sValue, always_update=False, signal_level=12):
-    # Make sure that the Domoticz device still exists (they can be deleted) before updating it
     if Unit in Devices:
         if Devices[Unit].nValue != nValue or Devices[Unit].sValue != sValue or always_update:
             Devices[Unit].Update(nValue=nValue, sValue=sValue, SignalLevel=signal_level)
