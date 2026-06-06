@@ -1,4 +1,4 @@
-# HW-Battery-Telemetry-plugin
+# Domoticz-HWBattery-Telemetry-Plugin
 A Python plugin for Domoticz that creates several devices for the HomeWizard Battery itself.  
 
 The plugin configuration requires the ip of the battery and a token.  
