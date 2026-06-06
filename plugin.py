@@ -5,7 +5,7 @@
 ## Last modified:  2026-06-06
 ##
 """
-<plugin key="HomeWizardBattery" name="HomeWizard Battery" author="Xtremernl" version="0.2.0" externallink="https://github.com/Xtremernl/HomeWizard-Battery-plugin">
+<plugin key="HomeWizardBatteryTelemetry" name="HomeWizard Battery Telemetry" author="Xtremernl" version="0.2.0" externallink="https://github.com/Xtremernl/HW-Battery-Telemetry-plugin/">
     <description>
         <h2>HomeWizard Battery Telemetry Plugin</h2><br/>
         This plugin provides several devices for the HomeWizard Plug-In Battery.<br/>
