@@ -1,5 +1,5 @@
-# HomeWizard-Battery-plugin
-A Python plugin for Domoticz that creates several devices for the HomeWizard Battery.  
+# HomeWizard-Battery-telematry-plugin
+A Python plugin for Domoticz that creates several devices for the HomeWizard Battery itself.  
 
 The plugin configuration requires the ip of the battery and a token.  
 A token is created on the battery using the `activate_user.py` script. 
@@ -22,5 +22,3 @@ Notes:
 * Multiple batteries need to be configuredf with multiple hardware devices. To combine them, like for SOC or power consumption/return use a dummy device and the event system to accumulate values. An example is provided with the ![dzEvent.lua](examples/dzEvent.lua) script in the examples directory.
 
 ![Devices](devices.png)
-
-Thanks to Eraser3 for https://github.com/Eraser3/HomeWizard-Wifi-p1-plugin which served as the basis for this plugin.
